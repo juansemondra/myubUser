@@ -65,6 +65,7 @@ public class UserApp {
 
     public static void main(String[] args) {
         // Ejemplo de creación de un usuario con ID 1, posición (2, 3) y tiempo de espera de 5 minutos 
+        // Ejemplo de creación de un usuario con ID 1, posición (2, 3) y tiempo de espera de 5 minutos
         UserApp user = new UserApp(1, 2, 3, 5);
         user.solicitarTaxi();
     }
