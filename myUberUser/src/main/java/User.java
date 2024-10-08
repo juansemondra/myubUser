@@ -24,29 +24,46 @@ public class User {
         this.solicitudRealizada = false;
         this.tiempoRespuesta = -1;
 
-        // Crear el contexto y el socket ZeroMQ para el usuario
-        context = ZMQ.context(1);
-        socket = context.socket(ZMQ.REQ); // Socket Request
-        socket.connect("tcp://" + SERVER_IP + ":" + PUERTO_SOLICITUDES); // Conectarse al servidor central
+        try {
+            context = ZMQ.context(1);
+            socket = context.socket(ZMQ.REQ);
+            socket.connect("tcp://" + SERVER_IP + ":" + PUERTO_SOLICITUDES);
+            System.out.println("Usuario " + id + " conectado exitosamente al servidor de solicitudes en el puerto " + PUERTO_SOLICITUDES);
+        } catch (Exception e) {
+            System.err.println("Error al conectar el usuario " + id + " al servidor: " + e.getMessage());
+        }
     }
 
     public void solicitarTaxi() {
         if (!solicitudRealizada) {
             solicitudRealizada = true;
-            System.out.println("Usuario " + id + " solicita taxi desde posición: (" + posX + ", " + posY + ")");
 
-            // Enviar solicitud al servidor usando ZeroMQ
-            String solicitud = "Usuario " + id + " solicita taxi desde (" + posX + ", " + posY + ")";
-            socket.send(solicitud.getBytes(ZMQ.CHARSET));
+            try {
+                System.out.println("Usuario " + id + " espera " + tiempoHastaSolicitud + " segundos antes de solicitar un taxi...");
+                Thread.sleep(tiempoHastaSolicitud * 1000);
 
-            // Esperar la respuesta del servidor
-            String respuesta = socket.recvStr(0); // Respuesta del servidor
-            System.out.println("Respuesta del servidor: " + respuesta);
+                long tiempoInicio = System.currentTimeMillis();
 
-            if (respuesta.contains("Taxi asignado")) {
-                asignarTaxi();
-            } else {
-                rechazarServicio();
+                System.out.println("Usuario " + id + " solicita taxi desde posición: " + posX + "," + posY);
+                String solicitud = "Usuario " + id + " solicita taxi desde " + posX + "," + posY;
+                socket.send(solicitud.getBytes(ZMQ.CHARSET));
+
+                String respuesta = socket.recvStr(0);
+                registrarTiempoRespuesta(tiempoInicio);
+
+                System.out.println("Respuesta del servidor: " + respuesta);
+
+                if (respuesta.contains("Taxi asignado")) {
+                    asignarTaxi();
+                } else {
+                    rechazarServicio();
+                }
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Solicitud del usuario " + id + " interrumpida.");
+            } catch (Exception e) {
+                System.err.println("Error en la solicitud del usuario " + id + ": " + e.getMessage());
             }
         }
     }
@@ -67,7 +84,12 @@ public class User {
     }
 
     public void close() {
-        socket.close();
-        context.close();
+        try {
+            socket.close();
+            context.close();
+            System.out.println("Conexión del usuario " + id + " cerrada exitosamente.");
+        } catch (Exception e) {
+            System.err.println("Error al cerrar la conexión del usuario " + id + ": " + e.getMessage());
+        }
     }
 }
