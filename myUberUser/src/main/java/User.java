@@ -1,7 +1,7 @@
 import org.zeromq.ZMQ;
 
 public class User {
-    private static final String SERVER_IP = "127.0.0.1";
+    private static final String SERVER_IP = "192.168.10.67";
     private static final int PUERTO_SOLICITUDES = 5557;
 
     private int id;
